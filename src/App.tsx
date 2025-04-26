@@ -1,14 +1,12 @@
-import { useState } from 'react'
-import './App.css'
+import Flow from "./components/Flow";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      hello world
-    </>
-  )
+    <div className="App">
+      <h1 style={{ textAlign: "center" }}>Avantos Journey Builder</h1>
+      <Flow />
+    </div>
+  );
 }
 
-export default App
+export default App;
