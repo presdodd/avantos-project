@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   ReactFlow,
   addEdge,
@@ -13,8 +13,8 @@ import {
   type OnNodeDrag,
   type DefaultEdgeOptions,
 } from '@xyflow/react';
-
 import '@xyflow/react/dist/style.css';
+import { fetchBlueprintGraph } from '../api/fetchGraph';
  
 const initialNodes: Node[] = [
   { id: '1', data: { label: 'Node 1' }, position: { x: 50, y: 50 } },
@@ -38,6 +38,7 @@ const onNodeDrag: OnNodeDrag = (_, node) => {
 function Flow() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [isReady, setIsReady] = useState(false);
  
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -51,9 +52,41 @@ function Flow() {
     (connection) => setEdges((eds) => addEdge(connection, eds)),
     [setEdges],
   );
+
+  useEffect(() => {
+    async function fetchGraph() {
+      try {
+        const graph = await fetchBlueprintGraph();
+  
+        const loadedNodes: Node[] = graph.nodes.map((node: any) => ({
+          id: node.id,
+          data: { label: node.data?.name || 'Unnamed Node' },
+          position: node.position || { x: Math.random() * 300, y: Math.random() * 300 },
+          type: 'default', 
+        }));
+  
+        const loadedEdges: Edge[] = graph.edges.map((edge: any, i: number) => ({
+          id: `e-${edge.source}-${edge.target}-${i}`,
+          source: edge.source,
+          target: edge.target,
+        }));
+  
+        setNodes(loadedNodes);
+        setEdges(loadedEdges);
+        setIsReady(true);
+  
+      } catch (e) {
+        console.error('Failed to load graph:', e);
+      }
+    }
+  
+    fetchGraph();
+  }, []);
+  
  
   return (
     <div style={{ width: '100%', height: '90vh' }}>
+      {isReady && (
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -65,6 +98,7 @@ function Flow() {
         fitViewOptions={fitViewOptions}
         defaultEdgeOptions={defaultEdgeOptions}
       />
+      )}
     </div>
   );
 }
